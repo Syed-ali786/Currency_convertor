@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Currency Converter — Professional</title>
+  <style>
+    /* (Use the same formal CSS from previous example) */
+    :root{
+      --bg: #f7f9fb;
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --primary: #0f172a;
+      --accent: #0b5cff;
+      --radius: 10px;
+      --shadow: 0 6px 24px rgba(15,23,42,0.08);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing: border-box;}
+    body {
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg, var(--bg), #edf2f7);
+      color:var(--primary);
+      padding:32px;
+    }
+    .card{
+      width:720px;
+      max-width:96vw;
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px;
+      display:grid;
+      grid-template-columns: 1fr 280px;
+      gap:20px;
+      align-items:start;
+    }
+    .heading{
+      grid-column:1 / -1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid #eef2f6;
+      padding-bottom:12px;
+      margin-bottom:14px;
+    }
+    .heading h1{
+      font-size:18px;
+      margin:0;
+      font-weight:600;
+      letter-spacing:0.2px;
+    }
+    .heading p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .form{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    label{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+      display:block;
+    }
+    input[type="number"], select{
+      width:100%;
+      padding:12px 14px;
+      border-radius:8px;
+      border:1px solid #e6eef8;
+      background:#fbfdff;
+      font-size:15px;
+      outline:none;
+    }
+    input[type="number"]:focus, select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px rgba(11,92,255,0.06);
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+    }
+    .controls button{
+      padding:11px 14px;
+      border-radius:8px;
+      border:0;
+      font-weight:600;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+      flex:1;
+    }
+    .btn-ghost{
+      background:transparent;
+      border:1px solid #e6eef8;
+      color:var(--primary);
+      width:120px;
+    }
+    .aside{
+      border-left:1px solid #f1f5f9;
+      padding-left:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .result{
+      background:#fbfdff;
+      border:1px solid #e9f0ff;
+      padding:14px;
+      border-radius:8px;
+      font-size:15px;
+    }
+    .rate{
+      font-size:13px;
+      color:var(--muted);
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+    }
+    footer.note{
+      grid-column:1 / -1;
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+    }
+    @media (max-width:760px){
+      .card{grid-template-columns:1fr; padding:18px}
+      .aside{border-left:none; padding-left:0}
+      .controls{flex-direction:column}
+      .controls .btn-ghost{width:100%}
+    }
+    .flag {
+      width:20px;
+      vertical-align:middle;
+      margin-right:6px;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" aria-labelledby="title">
+    <div class="heading" id="title">
+      <div>
+        <h1>Currency Converter</h1>
+        <p>Convert amounts using live exchange rates</p>
+      </div>
+      <p class="meta" id="lastFetch">—</p>
+    </div>
+
+    <section class="form" aria-label="converter form">
+      <div>
+        <label for="amount">Amount</label>
+        <input id="amount" type="number" min="0" step="any" placeholder="Enter amount (e.g. 1000)" value="100">
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1">
+          <label for="from">From</label>
+          <select id="from"></select>
+        </div>
+        <div style="width:120px">
+          <label for="precision">Precision</label>
+          <select id="precision" title="Decimal places">
+            <option>2</option>
+            <option>3</option>
+            <option selected>4</option>
+            <option>0</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="to">To</label>
+        <select id="to"></select>
+      </div>
+
+      <div class="controls" role="group" aria-label="actions">
+        <button id="convert" class="btn-primary">Convert</button>
+        <button id="swap" class="btn-ghost" type="button">Swap</button>
+      </div>
+
+      <div id="error" class="meta" role="status" aria-live="polite" style="color:#b91c1c"></div>
+    </section>
+
+    <aside class="aside" aria-label="conversion results">
+      <div class="result" id="result" aria-live="polite">
+        <div style="font-weight:600" id="converted">—</div>
+        <div class="rate" id="rateText">Rate: —</div>
+      </div>
+
+      <div class="meta" id="info">
+        <div id="sourceInfo">Source: Transaction via server</div>
+        <div id="note" style="margin-top:6px">Network requests are proxied via server and cached for performance.</div>
+      </div>
+    </aside>
+
+    <footer class="note" id="footerNote">Powered by exchangerate.host</footer>
+  </main>
+
+  <script>
+    const API_PROXY = '/api/convert';
+    const CURRENCIES = [];  // will fetch
+    const SYMBOLS = {
+      USD: '$', EUR:'€', GBP:'£', INR:'₹', JPY:'¥',
+      CAD:'C$', AUD:'A$', CHF:'Fr', CNY:'¥', SGD:'S$', HKD:'HK$',
+      AED:'د.إ', SAR:'﷼', NZD:'NZ$'
+    };
+    const FLAGS = {
+      USD:'🇺🇸', EUR:'🇪🇺', GBP:'🇬🇧', INR:'🇮🇳', JPY:'🇯🇵',
+      CAD:'🇨🇦', AUD:'🇦🇺', CHF:'🇨🇭', CNY:'🇨🇳', SGD:'🇸🇬',
+      HKD:'🇭🇰', AED:'🇦🇪', SAR:'🇸🇦', NZD:'🇳🇿'
+    };
+
+    const el = {
+      from: document.getElementById('from'),
+      to: document.getElementById('to'),
+      amount: document.getElementById('amount'),
+      convertBtn: document.getElementById('convert'),
+      swapBtn: document.getElementById('swap'),
+      result: document.getElementById('converted'),
+      rateText: document.getElementById('rateText'),
+      error: document.getElementById('error'),
+      lastFetch: document.getElementById('lastFetch'),
+      precision: document.getElementById('precision')
+    };
+
+    async function fetchSymbols(){
+      try {
+        const res = await fetch('https://api.exchangerate.host/symbols');
+        const data = await res.json();
+        if (!data.success) throw new Error('Failed to fetch symbols');
+        return data.symbols;
+      } catch(err) {
+        console.warn('Symbols fetch error', err);
+        return null;
+      }
+    }
+
+    function populateSelects(symbolsObj){
+      const codes = Object.keys(symbolsObj);
+      codes.sort();
+      codes.forEach(code => {
+        const name = symbolsObj[code];
+        const label = `${code} — ${name}`;
+        const markFrom = FLAGS[code] ? `${FLAGS[code]} ` : '';
+        const optionFrom = document.createElement('option');
+        optionFrom.value = code;
+        optionFrom.textContent = `${markFrom}${label}`;
+        el.from.append(optionFrom.cloneNode(true));
+        el.to.append(optionFrom);
+      });
+      el.from.value = 'USD';
+      el.to.value   = 'INR';
+    }
+
+    function fmt(value, decimals){
+      return Number(value).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function getCached(key){
+      try { return JSON.parse(localStorage.getItem(key)); }
+      catch(e){ return null; }
+    }
+
+    function setCached(key, value, ttlSeconds){
+      const record = { value, expiry: Date.now() + (ttlSeconds*1000) };
+      localStorage.setItem(key, JSON.stringify(record));
+    }
+
+    function isExpired(record){
+      return !record || (record.expiry && Date.now() > record.expiry);
+    }
+
+    async function convertAction(){
+      el.error.textContent = '';
+      el.result.textContent = 'Processing...';
+      el.rateText.textContent = '';
+      try {
+        const amount = parseFloat(el.amount.value);
+        if (isNaN(amount) || amount < 0){
+          throw new Error('Please enter a valid non-negative amount.');
+        }
+        const from = el.from.value;
+        const to   = el.to.value;
+        const precision = parseInt(el.precision.value, 10) || 2;
+
+        const cacheKey = `conv_${from}_${to}_${amount}`;
+        const cached  = getCached(cacheKey);
+        if (cached && !isExpired(cached)){
+          const data = cached.value;
+          updateUI(data, from, to, amount, precision, true);
+          return;
+        }
+
+        const response = await fetch(`${API_PROXY}?from=${from}&to=${to}&amount=${amount}`);
+        if (!response.ok) throw new Error('Server responded with status ' + response.status);
+        const data = await response.json();
+
+        setCached(cacheKey, data, 300); // cache 5 minutes
+        updateUI(data, from, to, amount, precision, false);
+      } catch(err){
+        el.error.textContent = err.message;
+        el.result.textContent = '—';
+        el.rateText.textContent = '';
+      }
+    }
+
+    function updateUI(data, from, to, amount, precision, fromCache){
+      const symbol = SYMBOLS[to] || '';
+      const convertedVal = data.result;
+      const rateVal      = data.info && data.info.rate ? data.info.rate : (convertedVal / (amount || 1));
+      const date         = data.date || new Date().toISOString().slice(0,10);
+
+      el.result.textContent   = `${symbol} ${fmt(convertedVal, precision)} (${to})`;
+      el.rateText.textContent = `1 ${from} = ${fmt(rateVal, precision+2)} ${to}  —  (Rate date: ${date}${fromCache? ', from cache':''})`;
+      el.lastFetch.textContent = `Last operation: ${new Date().toLocaleString()}`;
+    }
+
+    function swapCurrencies(){
+      const a = el.from.value;
+      el.from.value = el.to.value;
+      el.to.value   = a;
+    }
+
+    async function init(){
+      const symbolsObj = await fetchSymbols();
+      if (symbolsObj){
+        populateSelects(symbolsObj);
+      } else {
+        // fallback to some manual list
+        const fallback = { USD:'United States Dollar', EUR:'Euro', INR:'Indian Rupee', GBP:'British Pound', JPY:'Japanese Yen' };
+        populateSelects(fallback);
+      }
+
+      el.convertBtn.addEventListener('click', convertAction);
+      el.swapBtn.addEventListener('click', swapCurrencies);
+      el.amount.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') convertAction(); });
+
+      // initial convert
+      convertAction();
+    }
+
+    init();
+  </script>
+</body>
+</html>
